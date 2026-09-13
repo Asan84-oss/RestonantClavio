@@ -1,1 +1,100 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg-primary: #0B0B0C;
+  --color-bg-secondary: #121214;
+  --color-bg-card: #1A1A1D;
+  --color-bg-elevated: #222225;
+  --color-accent: #FF6B00;
+  --color-accent-dark: #E65100;
+  --color-accent-glow: rgba(255, 107, 0, 0.3);
+  --color-text-primary: #F5F5F7;
+  --color-text-secondary: #86868B;
+  --color-text-muted: #5A5A5E;
+  --color-border: #2A2A2D;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+}
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Glow Effect Utility */
+.glow-orange {
+  box-shadow: 0 0 20px var(--color-accent-glow), 0 0 40px rgba(255, 107, 0, 0.1);
+}
+
+.glow-text {
+  text-shadow: 0 0 20px var(--color-accent-glow);
+}
+
+/* Gradient Overlays */
+.gradient-hero {
+  background: linear-gradient(180deg, rgba(11, 11, 12, 0.3) 0%, rgba(11, 11, 12, 0.85) 60%, #0B0B0C 100%);
+}
+
+.gradient-card {
+  background: linear-gradient(145deg, var(--color-bg-card) 0%, var(--color-bg-secondary) 100%);
+}
+
+/* Animation Keyframes */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--color-accent-glow); }
+  50% { box-shadow: 0 0 40px var(--color-accent-glow), 0 0 60px rgba(255, 107, 0, 0.15); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 107, 0, 0.1) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}

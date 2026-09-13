@@ -1,97 +1,72 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>coder-app-name</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <meta name="theme-color" content="#0B0B0C" />
+
+    <!-- Primary SEO Meta Tags -->
+    <title>Clavio Akwa | Rooftop Lounge, Restaurant & Club à Douala - Akwa Nord</title>
+    <meta name="description" content="Clavio Akwa - Le meilleur rooftop lounge, restaurant et club à Douala. Réservez votre table, commandez en ligne et profitez de grillades, cocktails signature et soirées karaoké sur le toit d'Akwa Nord, Rue Mermoz." />
+    <meta name="keywords" content="rooftop lounge Douala, restaurant Akwa, club Douala, grillades Douala, cocktails Akwa, karaoké Douala, Clavio Akwa, restaurant Rue Mermoz, nightlife Douala, kizomba Douala" />
+    <meta name="author" content="Clavio Akwa" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://clavioakwa.com" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="restaurant" />
+    <meta property="og:url" content="https://clavioakwa.com" />
+    <meta property="og:title" content="Clavio Akwa | Rooftop Lounge & Restaurant Premium à Douala" />
+    <meta property="og:description" content="Vivez l'expérience rooftop ultime à Douala. Grillades signature, cocktails d'exception, soirées karaoké et ambiance lounge exclusive au cœur d'Akwa." />
+    <meta property="og:image" content="https://clavioakwa.com/og-image.jpg" />
+    <meta property="og:locale" content="fr_CM" />
+    <meta property="og:site_name" content="Clavio Akwa" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://clavioakwa.com" />
+    <meta name="twitter:title" content="Clavio Akwa | Rooftop Lounge & Restaurant Premium à Douala" />
+    <meta name="twitter:description" content="Vivez l'expérience rooftop ultime à Douala. Grillades, cocktails et ambiance exclusive." />
+    <meta name="twitter:image" content="https://clavioakwa.com/og-image.jpg" />
+
+    <!-- Structured Data for Local Business -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Clavio Akwa",
+      "description": "Premium rooftop lounge, restaurant and nightclub in Akwa, Douala",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Rue Mermoz, Akwa Nord",
+        "addressLocality": "Douala",
+        "addressCountry": "CM"
+      },
+      "servesCuisine": ["Grillades", "Cocktails", "Cuisine Internationale"],
+      "priceRange": "$$",
+      "openingHours": ["Mo-Su 17:00-02:00"],
+      "telephone": "+237-XXX-XXX-XXX",
+      "url": "https://clavioakwa.com",
+      "sameAs": [
+        "https://www.instagram.com/clavioakwa",
+        "https://www.facebook.com/ClavioAkwaOfficiel"
+      ]
+    }
+    </script>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Inline critical styles to prevent FOUC -->
     <style>
-      /* 内联样式确保主题色立即生效，避免闪烁 */
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-      }
-      html.light,
-      html.light body {
-        background-color: #ffffff !important;
-        color: #000000;
-      }
-      html.dark,
-      html.dark body {
-        background-color: #1a1a1a !important;
-        color: #ffffff;
-      }
+      html, body { margin: 0; padding: 0; }
+      body { background-color: #0B0B0C; color: #F5F5F7; }
     </style>
-    <script>
-      // 在 React 加载前立即设置主题，避免闪烁
-      (function () {
-        const isInIframe = window.self !== window.top;
-
-        function applyThemeToDOM(theme) {
-          document.documentElement.classList.remove("light", "dark");
-          document.documentElement.classList.add(theme);
-          document.documentElement.setAttribute("data-theme", theme);
-        }
-
-        if (isInIframe) {
-          // 监听父窗口主动推送的主题消息
-          window.addEventListener("message", function (event) {
-            if (event.data && typeof event.data.theme === "string") {
-              const theme = event.data.theme;
-              if (theme === "light" || theme === "dark") {
-                applyThemeToDOM(theme);
-              }
-            }
-          });
-        } else {
-          // 非 iframe 环境，使用默认 light 主题
-          applyThemeToDOM("light");
-        }
-      })();
-    </script>
-      <script>
-      (function () {
-        if (window.self === window.top) return;
-        var reported = {};
-        window.addEventListener("error", function (event) {
-          // 资源加载失败的 error 事件没有 message，此处仅上报 JS 运行时错误
-          if (!event || !event.message) return;
-          var key =
-            event.message + "|" + (event.filename || "") + "|" + (event.lineno || 0);
-          if (reported[key]) return; // 相同错误只上报一次，避免渲染循环刷屏
-          reported[key] = true;
-          try {
-            window.parent.postMessage(
-              {
-                type: "sandbox-runtime-error",
-                payload: {
-                  message: String(event.message).slice(0, 500),
-                  filename: event.filename || "",
-                  lineno: event.lineno || 0,
-                  colno: event.colno || 0,
-                  stack:
-                    event.error && event.error.stack
-                      ? String(event.error.stack).slice(0, 2000)
-                      : ""
-                }
-              },
-              "*"
-            );
-          } catch (e) {
-            /* 上报失败不影响页面运行 */
-          }
-        });
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
