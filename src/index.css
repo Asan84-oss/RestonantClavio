@@ -69,7 +69,159 @@ body {
   background: linear-gradient(145deg, var(--color-bg-card) 0%, var(--color-bg-secondary) 100%);
 }
 
-/* Animation Keyframes */
+/* ============================================================
+   FLOATING FOOD ANIMATION - 3D Multi-Axis Effect
+   ============================================================
+   GPU-accelerated transforms for 60fps mobile performance
+   ============================================================ */
+
+/* Container for the floating food element */
+.floating-food-container {
+  position: relative;
+  will-change: transform;
+}
+
+/* Main food image - combines vertical bob + rotation + glow */
+.floating-food-image {
+  position: relative;
+  will-change: transform, filter;
+  animation: 
+    float-vertical 6s ease-in-out infinite,
+    float-rotate 8s ease-in-out infinite,
+    float-glow 4s ease-in-out infinite;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.floating-food-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Axis 1: Vertical Bobbing - 12px Y-axis translation, 6s sinusoidal */
+@keyframes float-vertical {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0);
+  }
+}
+
+/* Axis 2: Subtle Rotation - ±4 degrees, 8s loop */
+@keyframes float-rotate {
+  0%, 100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+/* Axis 3: Dynamic Orange Glow Pulse - breathing effect */
+@keyframes float-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(255, 107, 0, 0.4)) drop-shadow(0 0 40px rgba(255, 107, 0, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 35px rgba(255, 107, 0, 0.6)) drop-shadow(0 0 70px rgba(255, 107, 0, 0.35));
+  }
+}
+
+/* Combined animation for the food image (overrides individual) */
+.floating-food-image {
+  animation: float-combined 12s ease-in-out infinite;
+}
+
+@keyframes float-combined {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-4deg);
+    filter: drop-shadow(0 0 20px rgba(255, 107, 0, 0.4)) drop-shadow(0 0 40px rgba(255, 107, 0, 0.2));
+  }
+  25% {
+    transform: translate3d(0, -8px, 0) rotate(0deg);
+    filter: drop-shadow(0 0 28px rgba(255, 107, 0, 0.5)) drop-shadow(0 0 50px rgba(255, 107, 0, 0.28));
+  }
+  50% {
+    transform: translate3d(0, -12px, 0) rotate(4deg);
+    filter: drop-shadow(0 0 35px rgba(255, 107, 0, 0.6)) drop-shadow(0 0 70px rgba(255, 107, 0, 0.35));
+  }
+  75% {
+    transform: translate3d(0, -6px, 0) rotate(1deg);
+    filter: drop-shadow(0 0 25px rgba(255, 107, 0, 0.45)) drop-shadow(0 0 45px rgba(255, 107, 0, 0.25));
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-4deg);
+    filter: drop-shadow(0 0 20px rgba(255, 107, 0, 0.4)) drop-shadow(0 0 40px rgba(255, 107, 0, 0.2));
+  }
+}
+
+/* Decorative ring animation */
+.floating-ring {
+  animation: ring-pulse 6s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes ring-pulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.05) rotate(180deg);
+    opacity: 0.6;
+  }
+}
+
+/* Secondary slower ring */
+.floating-ring-slow {
+  animation: ring-pulse-slow 10s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes ring-pulse-slow {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.03) rotate(-90deg);
+    opacity: 0.4;
+  }
+}
+
+/* ============================================================
+   MENU CARD HOVER ANIMATIONS
+   ============================================================ */
+
+.menu-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-card:hover {
+  transform: translateY(-4px);
+}
+
+.menu-card:hover .menu-card-image {
+  transform: scale(1.08);
+}
+
+.menu-card-image {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tab indicator animation */
+.tab-indicator {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   OTHER ANIMATIONS
+   ============================================================ */
+
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
@@ -97,4 +249,13 @@ body {
   background: linear-gradient(90deg, transparent 0%, rgba(255, 107, 0, 0.1) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 3s linear infinite;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .floating-food-image,
+  .floating-ring,
+  .floating-ring-slow {
+    animation: none !important;
+  }
 }
