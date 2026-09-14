@@ -2,12 +2,13 @@ import { MessageCircle } from 'lucide-react';
 
 export default function WhatsAppButton() {
   return (
-    <a
+         <a
       href={`https://wa.me{import.meta.env.VITE_RESTAURANT_WHATSAPP}?text=${encodeURIComponent("Bonjour Clavio Akwa ! Je souhaite réserver une table.")}`}
       target="_blank"
       rel="noopener noreferrer"
       className="whatsapp-float-btn"
     >
+
       <div className="relative">
         {/* Pulse Ring */}
         <div className="absolute inset-0 rounded-full bg-green-500/30 animate-ping" />
