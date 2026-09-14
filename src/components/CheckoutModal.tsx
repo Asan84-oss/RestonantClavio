@@ -29,7 +29,6 @@
 import { useState, useEffect } from 'react';
 import { X, ShoppingCart, CreditCard, Phone, User, Loader2, Shield, AlertCircle, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useMonetbil } from '../hooks/useMonetbil';
 import { isPaymentConfigured, MONETBIL_OPERATORS, type MonetbilOperator, isWhatsAppConfigured } from '../config/payment';
 import {
   compileOrder,
@@ -49,47 +48,76 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [orderCompiled, setOrderCompiled] = useState(false);
   const [selectedOperator, setSelectedOperator] = useState<MonetbilOperator | null>(null);
 
-  // Monetbil payment hook
-  const { initiatePayment, isProcessing, error: paymentError, resetError } = useMonetbil({
-    onSuccess: (transactionId, reference) => {
-      // Compile final order with transaction ID
-      const order = compileOrder(reservation, items, transactionId);
-      
-      // Store for success page
-      storeOrderForSuccessPage(order);
-      
-      // Dispatch to WhatsApp (Option A) - with error handling
-      try {
-        if (isWhatsAppConfigured()) {
-          dispatchToWhatsApp(order);
-        } else {
-          console.warn('[Clavio Akwa] WhatsApp dispatch skipped: VITE_RESTAURANT_WHATSAPP not configured');
+    // Declare global campay reference parameter to ensure TypeScript compilation passes smoothly
+  const campay = (window as any).campay;
+
+  const handlePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate order data arrays
+    const validation = validateOrder(reservation, items);
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      return;
+    }
+
+    if (!selectedOperator) {
+      setValidationErrors(['Veuillez sélectionner un opérateur de paiement (MTN MoMo ou Orange Money)']);
+      return;
+    }
+
+    setValidationErrors([]);
+    setOrderCompiled(true);
+
+    const order = compileOrder(reservation, items);
+
+    if (typeof campay !== 'undefined') {
+      // 1. Configure the options array parameters
+      campay.options({
+        payButtonId: "payButton", // Ensure your form submit button carries id="payButton"
+        description: `Commande Clavio Akwa - ${items.length} article(s) - ${order.reference}`,
+        amount: order.total.toString(),
+        currency: "XAF",
+        externalReference: order.reference,
+        redirectUrl: ""
+      });
+
+      // 2. Map the verification callback handlers
+      campay.onSuccess = function (data: any) {
+        // Compile the official confirmation payload string record
+        const confirmedOrder = compileOrder(reservation, items, data.reference);
+        storeOrderForSuccessPage(confirmedOrder);
+        
+        try {
+          if (isWhatsAppConfigured()) {
+            dispatchToWhatsApp(confirmedOrder);
+          }
+        } catch (error) {
+          console.error('WhatsApp routing failure:', error);
         }
-      } catch (error) {
-        console.error('[Clavio Akwa] WhatsApp dispatch failed:', error);
-        // Continue with success flow even if WhatsApp fails
-      }
-      
-      // Clear cart after successful payment
-      clearCart();
-      
-      // Mark as compiled and redirect to success page
-      setOrderCompiled(true);
-      
-      // Redirect to success page after brief delay
-      setTimeout(() => {
-        window.location.href = `/success?ref=${order.reference}&tx=${transactionId}`;
-      }, 1500);
-    },
-    onCancel: () => {
-      // Cart is preserved - user can retry
-      console.log('Payment cancelled - cart preserved');
-    },
-    onError: (error) => {
-      console.error('Payment error:', error);
-      setValidationErrors([error]);
-    },
-  });
+
+        clearCart();
+        setTimeout(() => {
+          window.location.href = `/success?ref=${order.reference}&tx=${data.reference}`;
+        }, 1000);
+      };
+
+      campay.onFail = function (data: any) {
+        console.error('Transaction fail error:', data.status);
+        setValidationErrors(['La transaction a échoué ou a été refusée.']);
+        setOrderCompiled(false);
+      };
+
+      campay.onModalClose = function () {
+        console.log('User manually closed checkout view frame');
+        setOrderCompiled(false);
+      };
+    } else {
+      setValidationErrors(['Le module de paiement Campay n\'a pas pu être chargé correctement.']);
+      setOrderCompiled(false);
+    }
+  };
+  
 
   // Prevent body scroll when modal is open
   useEffect(() => {
