@@ -3,7 +3,7 @@ import { MessageCircle } from 'lucide-react';
 export default function WhatsAppButton() {
   return (
     <a
-      href="https://wa.me/237000000000?text=Bonjour%20Clavio%20Akwa%20!%20Je%20souhaite%20r%C3%A9server%20une%20table."
+      href={`https://wa.me{import.meta.env.VITE_RESTAURANT_WHATSAPP}?text=${encodeURIComponent("Bonjour Clavio Akwa ! Je souhaite réserver une table.")}`}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 group"
