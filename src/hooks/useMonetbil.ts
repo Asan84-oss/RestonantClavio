@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * MONETBIL WIDGET HOOK - CALLBACK ENGINE
+ * MONETBIL WIDGET HOOK - CALLBACK ENGINE (v2.1 API)
  * ============================================================
  * 
  * Manages the Monetbil payment widget lifecycle:
@@ -9,6 +9,10 @@
  * 3. Extracts transaction_id on success
  * 4. Handles cancellation without clearing cart
  * 5. Provides loading states to prevent duplicate orders
+ * 
+ * MONETBIL WIDGET v2.1 API:
+ * - Base URL: https://monetbil.com{service_key}
+ * - Operators: CM_MTNMOBILEMONEY, CM_ORANGEMONEY
  * 
  * USAGE:
  * const { initiatePayment, isProcessing, error } = useMonetbil({
@@ -20,7 +24,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getPaymentConfig } from '../config/payment';
+import { getPaymentConfig, getMonetbilApiUrl, type MonetbilOperator } from '../config/payment';
 
 interface MonetbilEvent {
   type: string;
@@ -54,6 +58,7 @@ interface PaymentOrderData {
   customerEmail?: string;
   description: string;
   reference: string;
+  operator: MonetbilOperator; // Required: CM_MTNMOBILEMONEY or CM_ORANGEMONEY
 }
 
 export function useMonetbil(options: UseMonetbilOptions = {}): UseMonetbilReturn {
@@ -108,7 +113,8 @@ export function useMonetbil(options: UseMonetbilOptions = {}): UseMonetbilReturn
   }, [handleMessage]);
 
   /**
-   * Initiate payment via Monetbil widget
+   * Initiate payment via Monetbil Widget v2.1 API
+   * URL structure: https://monetbil.com{service_key}
    */
   const initiatePayment = useCallback(async (orderData: PaymentOrderData) => {
     try {
@@ -122,23 +128,40 @@ export function useMonetbil(options: UseMonetbilOptions = {}): UseMonetbilReturn
         throw new Error('Window not available');
       }
 
+      // Validate operator
+      if (!orderData.operator) {
+        throw new Error('Opérateur de paiement non sélectionné');
+      }
+
+      // Monetbil Widget v2.1 API URL structure
+      // Format: https://monetbil.com{service_key}
+      const monetbilUrl = getMonetbilApiUrl();
+
       // Create payment form dynamically
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = 'https://api.monetbil.com/v1/payment';
+      form.action = monetbilUrl;
       form.target = '_blank'; // Open in new tab/window
 
-      // Required Monetbil fields
+      // Required Monetbil Widget v2.1 fields
       const fields: Record<string, string> = {
-        service_key: config.serviceKey,
+        // Core payment fields
         amount: orderData.amount.toString(),
         currency: orderData.currency,
         item_name: orderData.description,
         item_description: orderData.description,
+        
+        // Redirect URLs
         return_url: `${window.location.origin}${config.successUrl}`,
         cancel_url: `${window.location.origin}${config.cancelUrl}`,
         notify_url: `${window.location.origin}/api/payment/notify`,
+        
+        // Reference
         ref: orderData.reference,
+        
+        // Operator selection (required for Widget v2.1)
+        operator: orderData.operator,
+        
         // Customer info
         first_name: orderData.customerName.split(' ')[0] || orderData.customerName,
         last_name: orderData.customerName.split(' ').slice(1).join(' ') || '',

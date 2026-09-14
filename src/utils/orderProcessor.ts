@@ -228,9 +228,13 @@ export const formatWhatsAppMessage = (order: CompiledOrder): string => {
 /**
  * Dispatch order to WhatsApp via deep-link
  * Opens WhatsApp with pre-filled message
+ * 
+ * @throws Error if WhatsApp number is not configured
  */
 export const dispatchToWhatsApp = (order: CompiledOrder): void => {
   const message = formatWhatsAppMessage(order);
+  
+  // buildWhatsAppUrl will throw if not configured
   const whatsappUrl = buildWhatsAppUrl(message);
   
   // Open WhatsApp in new tab (preserves current page for receipt)
