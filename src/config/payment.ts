@@ -92,24 +92,31 @@ export const isPaymentConfigured = (): boolean => {
 
 /**
  * Build the Monetbil Widget v2.1 API URL
- * Format: https://monetbil.com{service_key}
+ * Format: https://monetbil.com{import.meta.env.VITE_MONETBIL_SERVICE_KEY}
+ * Uses Vite environment variable directly
  */
 export const getMonetbilApiUrl = (): string => {
-  const config = getPaymentConfig();
-  return `https://monetbil.com${config.serviceKey}`;
+  const serviceKey = import.meta.env.VITE_MONETBIL_SERVICE_KEY;
+  if (!serviceKey) {
+    console.error('[Clavio Akwa] CRITICAL: VITE_MONETBIL_SERVICE_KEY is not configured');
+    return '';
+  }
+  return `https://monetbil.com${serviceKey}`;
 };
 
 /**
  * Build the WhatsApp deep-link URL for order dispatch
+ * Uses import.meta.env.VITE_RESTAURANT_WHATSAPP directly
  * Includes strict validation for the WhatsApp number
  * 
  * @throws Error if WhatsApp number is not configured
  */
 export const buildWhatsAppUrl = (message: string): string => {
-  const config = getPaymentConfig();
+  // Fetch target phone number directly from Vite environment variable
+  const whatsappNumber = import.meta.env.VITE_RESTAURANT_WHATSAPP;
   
   // Strict validation: throw error if WhatsApp number is not configured
-  if (!config.restaurantWhatsApp) {
+  if (!whatsappNumber) {
     const errorMsg = '[Clavio Akwa] CRITICAL: VITE_RESTAURANT_WHATSAPP environment variable is not configured. WhatsApp dispatch disabled. Please set this variable in your .env.local file.';
     console.error(errorMsg);
     throw new Error(errorMsg);
@@ -117,21 +124,21 @@ export const buildWhatsAppUrl = (message: string): string => {
   
   // Validate phone number format (should be digits only with country code)
   const phoneRegex = /^\d{10,15}$/;
-  if (!phoneRegex.test(config.restaurantWhatsApp)) {
-    const errorMsg = `[Clavio Akwa] CRITICAL: VITE_RESTAURANT_WHATSAPP value "${config.restaurantWhatsApp}" is invalid. Expected format: digits only with country code (e.g., "2376XXXXXXXX").`;
+  if (!phoneRegex.test(whatsappNumber)) {
+    const errorMsg = `[Clavio Akwa] CRITICAL: VITE_RESTAURANT_WHATSAPP value "${whatsappNumber}" is invalid. Expected format: digits only with country code (e.g., "2376XXXXXXXX").`;
     console.error(errorMsg);
     throw new Error(errorMsg);
   }
   
   // Properly encode the message for URL
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${config.restaurantWhatsApp}?text=${encodedMessage}`;
+  return `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
 };
 
 /**
  * Check if WhatsApp dispatch is available
+ * Uses import.meta.env.VITE_RESTAURANT_WHATSAPP directly
  */
 export const isWhatsAppConfigured = (): boolean => {
-  const config = getPaymentConfig();
-  return config.restaurantWhatsApp !== null;
+  return !!import.meta.env.VITE_RESTAURANT_WHATSAPP;
 };
