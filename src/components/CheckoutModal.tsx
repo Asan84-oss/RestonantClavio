@@ -398,6 +398,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           {/* Submit Button */}
           <button
             type="submit"
+            id="payButton"
             disabled={isProcessing || orderCompiled || items.length === 0 || !selectedOperator}
             className="w-full px-6 py-4 bg-accent hover:bg-accent-dark disabled:bg-bg-elevated disabled:text-text-muted text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-accent/30 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
           >
