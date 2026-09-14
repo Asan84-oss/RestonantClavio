@@ -131,15 +131,15 @@ export function useMonetbil(options: UseMonetbilOptions = {}): UseMonetbilReturn
         throw new Error('Opérateur de paiement non sélectionné');
       }
 
-      // Build Monetbil Widget v2.1 API URL directly using Vite env variable
-      // Exact format: https://monetbil.com{import.meta.env.VITE_MONETBIL_SERVICE_KEY}
+      // Build Monetbil Widget v2.1 API URL with complete path structure
+      // Exact format: https://api.monetbil.com/widget/v2.1/{VITE_MONETBIL_SERVICE_KEY}
       const serviceKey = import.meta.env.VITE_MONETBIL_SERVICE_KEY;
       
       if (!serviceKey) {
         throw new Error('Configuration Monetbil manquante: VITE_MONETBIL_SERVICE_KEY non défini');
       }
       
-      const monetbilUrl = `https://monetbil.com${serviceKey}`;
+      const monetbilUrl = `https://api.monetbil.com/widget/v2.1/${serviceKey}`;
 
       // Create payment form dynamically
       const form = document.createElement('form');

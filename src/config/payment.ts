@@ -92,7 +92,7 @@ export const isPaymentConfigured = (): boolean => {
 
 /**
  * Build the Monetbil Widget v2.1 API URL
- * Format: https://monetbil.com{import.meta.env.VITE_MONETBIL_SERVICE_KEY}
+ * Format: https://api.monetbil.com/widget/v2.1/{VITE_MONETBIL_SERVICE_KEY}
  * Uses Vite environment variable directly
  */
 export const getMonetbilApiUrl = (): string => {
@@ -101,7 +101,7 @@ export const getMonetbilApiUrl = (): string => {
     console.error('[Clavio Akwa] CRITICAL: VITE_MONETBIL_SERVICE_KEY is not configured');
     return '';
   }
-  return `https://monetbil.com${serviceKey}`;
+  return `https://api.monetbil.com/widget/v2.1/${serviceKey}`;
 };
 
 /**
