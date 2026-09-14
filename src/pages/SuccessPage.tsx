@@ -7,48 +7,46 @@
  * Shows order receipt details and reassures the customer that
  * their table/meal is secured.
  * 
- * DATA SOURCE:
- * - Reads order data from sessionStorage (set during checkout)
+ * DATA SOURCES:
+ * - URL params: ?ref=ORDER_REF&tx=TRANSACTION_ID
+ * - sessionStorage: lastOrder (compiled order data)
  * - Falls back to generic message if no data available
  * ============================================================
  */
 
 import { useEffect, useState } from 'react';
-import { Check, Download, ArrowLeft, Phone, MapPin, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-interface OrderData {
-  amount: number;
-  currency: string;
-  customer_name: string;
-  customer_phone: string;
-  customer_email?: string;
-  items: Array<{
-    id: number;
-    name: string;
-    quantity: number;
-    price: string;
-  }>;
-  reference: string;
-  description: string;
-}
+import { Check, Download, ArrowLeft, Phone, MapPin, Clock, ExternalLink } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { retrieveStoredOrder, clearStoredOrder, type CompiledOrder } from '../utils/orderProcessor';
 
 export default function SuccessPage() {
-  const [order, setOrder] = useState<OrderData | null>(null);
+  const [searchParams] = useSearchParams();
+  const [order, setOrder] = useState<CompiledOrder | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [reference, setReference] = useState<string | null>(null);
 
   useEffect(() => {
+    // Read URL params
+    const txParam = searchParams.get('tx');
+    const refParam = searchParams.get('ref');
+    if (txParam) setTransactionId(txParam);
+    if (refParam) setReference(refParam);
+
     // Retrieve order data from sessionStorage
-    const storedOrder = sessionStorage.getItem('lastOrder');
+    const storedOrder = retrieveStoredOrder();
     if (storedOrder) {
-      setOrder(JSON.parse(storedOrder));
-      // Clear after reading
-      sessionStorage.removeItem('lastOrder');
+      setOrder(storedOrder);
+      // Clear after reading (one-time display)
+      clearStoredOrder();
     }
-  }, []);
+  }, [searchParams]);
 
   const handlePrintReceipt = () => {
     window.print();
   };
+
+  const displayRef = reference || order?.reference || '—';
+  const displayTx = transactionId || order?.transactionId || '—';
 
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4 py-12">
@@ -69,19 +67,44 @@ export default function SuccessPage() {
             À très bientôt au Clavio Akwa !
           </p>
 
-          {/* Order Details */}
-          {order && (
-            <div className="bg-bg-primary rounded-2xl border border-border p-5 mb-6 text-left">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-text-primary font-semibold text-sm">Reçu de commande</h3>
-                <span className="text-text-muted text-xs">#{order.reference}</span>
+          {/* Transaction Details */}
+          <div className="bg-bg-primary rounded-2xl border border-border p-5 mb-6 text-left">
+            <h3 className="text-text-primary font-semibold text-sm mb-4 flex items-center gap-2">
+              <Check className="w-4 h-4 text-accent" />
+              Détails de la transaction
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-text-secondary text-xs">Réf. Commande</span>
+                <span className="text-text-primary text-sm font-mono font-medium">{displayRef}</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-text-secondary text-xs">Réf. Paiement</span>
+                <span className="text-accent text-sm font-mono font-medium">{displayTx}</span>
+              </div>
+              {order && (
+                <>
+                  <div className="flex justify-between items-center pt-3 border-t border-border/50">
+                    <span className="text-text-secondary text-xs">Client</span>
+                    <span className="text-text-primary text-sm font-medium">{order.customer.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-secondary text-xs">Montant</span>
+                    <span className="text-accent text-sm font-bold">{order.total.toLocaleString()} XAF</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
 
-              {/* Items */}
-              <div className="space-y-2 mb-4 pb-4 border-b border-border/50">
+          {/* Order Items */}
+          {order && order.items.length > 0 && (
+            <div className="bg-bg-primary rounded-2xl border border-border p-5 mb-6 text-left">
+              <h3 className="text-text-primary font-semibold text-sm mb-4">Votre commande</h3>
+              <div className="space-y-2">
                 {order.items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-text-primary text-sm">{item.name}</p>
                       <p className="text-text-muted text-xs">Qté: {item.quantity}</p>
                     </div>
@@ -89,23 +112,22 @@ export default function SuccessPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
 
-              {/* Total */}
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary font-medium text-sm">Total payé</span>
-                <span className="text-accent font-bold text-lg">{order.amount.toLocaleString()} XAF</span>
+          {/* WhatsApp Confirmation Notice */}
+          <div className="p-4 bg-green-500/5 border border-green-500/20 rounded-xl mb-6">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">💬</span>
+              <div className="text-left">
+                <p className="text-text-primary text-sm font-medium">Confirmation WhatsApp envoyée</p>
+                <p className="text-text-secondary text-xs mt-1">
+                  Votre commande a été automatiquement transmise au restaurant.
+                  Vous recevrez une confirmation de leur part sous peu.
+                </p>
               </div>
             </div>
-          )}
-
-          {/* Customer Info */}
-          {order?.customer_name && (
-            <div className="bg-bg-primary rounded-2xl border border-border p-4 mb-6 text-left">
-              <p className="text-text-secondary text-xs mb-1">Commande pour</p>
-              <p className="text-text-primary font-medium text-sm">{order.customer_name}</p>
-              <p className="text-text-muted text-xs mt-1">{order.customer_phone}</p>
-            </div>
-          )}
+          </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">

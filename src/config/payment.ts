@@ -16,6 +16,7 @@
  * - VITE_MONETBIL_SERVICE_KEY: Your Monetbil service identifier
  * - VITE_MONETBIL_SERVICE_SECRET: Your Monetbil secret key
  * - VITE_MONETBIL_ENVIRONMENT: 'test' or 'production'
+ * - VITE_RESTAURANT_WHATSAPP: Target WhatsApp number (with country code, no +)
  * 
  * REDIRECT URLS:
  * - Success: /success (after payment completion)
@@ -31,6 +32,7 @@ export interface PaymentConfig {
   successUrl: string;
   cancelUrl: string;
   merchantName: string;
+  restaurantWhatsApp: string;
 }
 
 /**
@@ -40,7 +42,6 @@ export interface PaymentConfig {
 export const getPaymentConfig = (): PaymentConfig => {
   const config: PaymentConfig = {
     // Service credentials from environment
-    // These are prefixed with VITE_ to be accessible in the browser
     serviceKey: import.meta.env.VITE_MONETBIL_SERVICE_KEY || 'test_service_key',
     serviceSecret: import.meta.env.VITE_MONETBIL_SERVICE_SECRET || 'test_service_secret',
     
@@ -56,6 +57,10 @@ export const getPaymentConfig = (): PaymentConfig => {
     
     // Merchant display name
     merchantName: 'Clavio Akwa',
+    
+    // Target WhatsApp number for order dispatch
+    // Format: country code + number, no + or spaces (e.g., "2376XXXXXXXX")
+    restaurantWhatsApp: import.meta.env.VITE_RESTAURANT_WHATSAPP || '237600000000',
   };
 
   return config;
@@ -80,4 +85,13 @@ export const getMonetbilUrl = (): string => {
   return config.environment === 'production'
     ? 'https://widget.monetbil.com'
     : 'https://test.widget.monetbil.com';
+};
+
+/**
+ * Build the WhatsApp deep-link URL for order dispatch
+ */
+export const buildWhatsAppUrl = (message: string): string => {
+  const config = getPaymentConfig();
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${config.restaurantWhatsApp}?text=${encodedMessage}`;
 };

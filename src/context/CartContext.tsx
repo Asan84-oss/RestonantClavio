@@ -3,24 +3,27 @@
  * CART CONTEXT - GLOBAL STATE MANAGEMENT
  * ============================================================
  * 
- * Provides a React Context for managing the shopping cart state
- * across all components. Handles adding/removing items, quantity
- * management, and total price calculation.
+ * Provides a React Context for managing:
+ * - Shopping cart state (items, quantities, totals)
+ * - Reservation data (merged with cart for checkout)
+ * - Checkout modal state
  * 
  * USAGE:
  * import { useCart } from '../context/CartContext';
- * const { items, total, addToCart, removeFromCart, clearCart } = useCart();
+ * const { items, total, reservation, setReservation, ... } = useCart();
  * ============================================================
  */
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { MenuItem } from '../data/menuData';
+import type { ReservationData } from '../utils/orderProcessor';
 
 export interface CartItem extends MenuItem {
   quantity: number;
 }
 
 interface CartContextType {
+  // Cart state
   items: CartItem[];
   total: number;
   itemCount: number;
@@ -28,10 +31,28 @@ interface CartContextType {
   removeFromCart: (itemId: number) => void;
   updateQuantity: (itemId: number, quantity: number) => void;
   clearCart: () => void;
+  
+  // Reservation state (shared with booking form)
+  reservation: ReservationData;
+  setReservation: (data: Partial<ReservationData>) => void;
+  clearReservation: () => void;
+  
+  // Checkout modal state
   isCheckoutOpen: boolean;
   openCheckout: () => void;
   closeCheckout: () => void;
 }
+
+const defaultReservation: ReservationData = {
+  name: '',
+  phone: '',
+  email: '',
+  date: '',
+  time: '',
+  guests: '2',
+  occasion: '',
+  notes: '',
+};
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -40,13 +61,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
  * Handles formats like "7 500 XAF", "7,500 XAF", "7500"
  */
 const parsePrice = (priceString: string): number => {
-  // Remove non-numeric characters except digits
   const numericString = priceString.replace(/[^\d]/g, '');
   return parseInt(numericString, 10) || 0;
 };
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [reservation, setReservationState] = useState<ReservationData>(defaultReservation);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const addToCart = useCallback((item: MenuItem) => {
@@ -79,6 +100,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([]);
   }, []);
 
+  const setReservation = useCallback((data: Partial<ReservationData>) => {
+    setReservationState((prev) => ({ ...prev, ...data }));
+  }, []);
+
+  const clearReservation = useCallback(() => {
+    setReservationState(defaultReservation);
+  }, []);
+
   const openCheckout = useCallback(() => {
     setIsCheckoutOpen(true);
   }, []);
@@ -105,6 +134,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        reservation,
+        setReservation,
+        clearReservation,
         isCheckoutOpen,
         openCheckout,
         closeCheckout,

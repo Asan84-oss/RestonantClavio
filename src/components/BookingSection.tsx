@@ -1,56 +1,16 @@
-import { useState } from 'react';
 import { Calendar, Clock, Users, Check, ArrowRight } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 export default function BookingSection() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    date: '',
-    time: '',
-    guests: '2',
-    occasion: '',
-    notes: '',
-  });
-  const [submitted, setSubmitted] = useState(false);
+  const { reservation, setReservation, clearReservation } = useCart();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setReservation({ [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-    // Here you would integrate with your backend/WhatsApp API
+  const handleReset = () => {
+    clearReservation();
   };
-
-  if (submitted) {
-    return (
-      <section id="booking" className="py-20 lg:py-28 bg-bg-secondary">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
-          <div className="gradient-card border border-accent/30 rounded-3xl p-10 lg:p-14">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center">
-              <Check className="w-8 h-8 text-accent" />
-            </div>
-            <h3 className="font-display text-2xl sm:text-3xl font-bold text-text-primary mb-4">
-              Réservation Confirmée !
-            </h3>
-            <p className="text-text-secondary text-base leading-relaxed mb-6">
-              Merci {formData.name || 'cher client'} ! Votre table pour {formData.guests} personne(s)
-              le {formData.date || 'date à confirmer'} à {formData.time || 'heure à confirmer'}
-              a bien été enregistrée. Vous recevrez une confirmation par WhatsApp sous peu.
-            </p>
-            <button
-              onClick={() => setSubmitted(false)}
-              className="px-6 py-3 bg-accent hover:bg-accent-dark text-white font-semibold rounded-full transition-all"
-            >
-              Nouvelle Réservation
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section id="booking" className="py-20 lg:py-28 bg-bg-secondary relative overflow-hidden">
@@ -77,7 +37,7 @@ export default function BookingSection() {
           {/* Form */}
           <div className="lg:col-span-3">
             <form
-              onSubmit={handleSubmit}
+              onSubmit={(e) => e.preventDefault()}
               className="gradient-card border border-border rounded-3xl p-6 sm:p-8 lg:p-10"
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -89,7 +49,7 @@ export default function BookingSection() {
                   <input
                     type="text"
                     name="name"
-                    value={formData.name}
+                    value={reservation.name}
                     onChange={handleChange}
                     required
                     placeholder="Votre nom"
@@ -105,7 +65,7 @@ export default function BookingSection() {
                   <input
                     type="email"
                     name="email"
-                    value={formData.email}
+                    value={reservation.email || ''}
                     onChange={handleChange}
                     placeholder="votre@email.com"
                     className="w-full px-4 py-3 bg-bg-primary border border-border rounded-xl text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
@@ -120,7 +80,7 @@ export default function BookingSection() {
                   <input
                     type="tel"
                     name="phone"
-                    value={formData.phone}
+                    value={reservation.phone}
                     onChange={handleChange}
                     required
                     placeholder="+237 6XX XXX XXX"
@@ -137,7 +97,7 @@ export default function BookingSection() {
                   <input
                     type="date"
                     name="date"
-                    value={formData.date}
+                    value={reservation.date}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 bg-bg-primary border border-border rounded-xl text-text-primary focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
@@ -152,7 +112,7 @@ export default function BookingSection() {
                   </label>
                   <select
                     name="time"
-                    value={formData.time}
+                    value={reservation.time}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 bg-bg-primary border border-border rounded-xl text-text-primary focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
@@ -176,7 +136,7 @@ export default function BookingSection() {
                   </label>
                   <select
                     name="guests"
-                    value={formData.guests}
+                    value={reservation.guests}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 bg-bg-primary border border-border rounded-xl text-text-primary focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
@@ -196,17 +156,17 @@ export default function BookingSection() {
                   </label>
                   <select
                     name="occasion"
-                    value={formData.occasion}
+                    value={reservation.occasion || ''}
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-bg-primary border border-border rounded-xl text-text-primary focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all text-sm"
                   >
                     <option value="">Sélectionner</option>
-                    <option value="dinner">Dîner d'affaires</option>
-                    <option value="birthday">Anniversaire</option>
-                    <option value="date">Rendez-vous romantique</option>
-                    <option value="group">Soirée entre amis</option>
-                    <option value="corporate">Événement corporate</option>
-                    <option value="other">Autre</option>
+                    <option value="Dîner d'affaires">Dîner d'affaires</option>
+                    <option value="Anniversaire">Anniversaire</option>
+                    <option value="Rendez-vous romantique">Rendez-vous romantique</option>
+                    <option value="Soirée entre amis">Soirée entre amis</option>
+                    <option value="Événement corporate">Événement corporate</option>
+                    <option value="Autre">Autre</option>
                   </select>
                 </div>
 
@@ -217,7 +177,7 @@ export default function BookingSection() {
                   </label>
                   <textarea
                     name="notes"
-                    value={formData.notes}
+                    value={reservation.notes || ''}
                     onChange={handleChange}
                     rows={3}
                     placeholder="Allergies, préférences de placement, demandes spéciales..."
@@ -226,14 +186,24 @@ export default function BookingSection() {
                 </div>
               </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                className="w-full mt-6 px-8 py-4 bg-accent hover:bg-accent-dark text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-accent/30 flex items-center justify-center gap-2 text-sm sm:text-base"
-              >
-                Confirmer la Réservation
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {/* Info note */}
+              <div className="mt-6 p-4 bg-accent/5 border border-accent/15 rounded-xl">
+                <p className="text-text-secondary text-xs leading-relaxed">
+                  💡 <span className="text-text-primary font-medium">Astuce :</span> Remplissez vos informations de réservation puis ajoutez vos plats au menu ci-dessus. 
+                  Le paiement Mobile Money combinera automatiquement les deux.
+                </p>
+              </div>
+
+              {/* Reset Button */}
+              {(reservation.name || reservation.phone || reservation.date) && (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="w-full mt-4 px-6 py-3 bg-bg-elevated hover:bg-bg-card border border-border hover:border-accent/30 text-text-secondary hover:text-text-primary text-sm font-medium rounded-xl transition-all"
+                >
+                  Réinitialiser le formulaire
+                </button>
+              )}
             </form>
           </div>
 

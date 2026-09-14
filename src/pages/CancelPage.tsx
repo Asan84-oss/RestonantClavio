@@ -4,12 +4,12 @@
  * ============================================================
  * 
  * Graceful return handler when user closes the payment modal
- * or cancels the transaction. Guides them back to their cart.
+ * or cancels the transaction. Cart data is preserved.
  * 
  * BEHAVIOR:
  * - Shows a friendly message (no blame)
  * - Offers to return to cart to retry
- * - Preserves cart data (not cleared on cancel)
+ * - Cart data is preserved (not cleared on cancel)
  * - Provides alternative contact options
  * ============================================================
  */
@@ -54,6 +54,16 @@ export default function CancelPage() {
                 <span className="text-text-secondary text-xs">Votre panier est intact et prêt pour une nouvelle tentative</span>
               </li>
             </ul>
+          </div>
+
+          {/* Cart Preserved Notice */}
+          <div className="p-4 bg-accent/5 border border-accent/15 rounded-xl mb-6">
+            <div className="flex items-center justify-center gap-2">
+              <ShoppingCart className="w-4 h-4 text-accent" />
+              <p className="text-text-primary text-sm font-medium">
+                Votre panier a été préservé
+              </p>
+            </div>
           </div>
 
           {/* Actions */}
