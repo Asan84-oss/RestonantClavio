@@ -6,8 +6,7 @@ export default function WhatsAppButton() {
       href={`https://wa.me{import.meta.env.VITE_RESTAURANT_WHATSAPP}?text=${encodeURIComponent("Bonjour Clavio Akwa ! Je souhaite réserver une table.")}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-6 right-6 z-50 group"
-      aria-label="Contacter sur WhatsApp"
+      className="whatsapp-float-btn"
     >
       <div className="relative">
         {/* Pulse Ring */}
