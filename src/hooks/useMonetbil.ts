@@ -24,7 +24,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getPaymentConfig, getMonetbilApiUrl, type MonetbilOperator } from '../config/payment';
+import type { MonetbilOperator } from '../config/payment';
 
 interface MonetbilEvent {
   type: string;
@@ -114,14 +114,12 @@ export function useMonetbil(options: UseMonetbilOptions = {}): UseMonetbilReturn
 
   /**
    * Initiate payment via Monetbil Widget v2.1 API
-   * URL structure: https://monetbil.com{service_key}
+   * URL structure: https://monetbil.com{VITE_MONETBIL_SERVICE_KEY}
    */
   const initiatePayment = useCallback(async (orderData: PaymentOrderData) => {
     try {
       setIsProcessing(true);
       setError(null);
-
-      const config = getPaymentConfig();
 
       // Check if widget script is loaded
       if (typeof window === 'undefined') {
@@ -133,9 +131,15 @@ export function useMonetbil(options: UseMonetbilOptions = {}): UseMonetbilReturn
         throw new Error('Opérateur de paiement non sélectionné');
       }
 
-      // Monetbil Widget v2.1 API URL structure
-      // Format: https://monetbil.com{service_key}
-      const monetbilUrl = getMonetbilApiUrl();
+      // Build Monetbil Widget v2.1 API URL directly using Vite env variable
+      // Exact format: https://monetbil.com{import.meta.env.VITE_MONETBIL_SERVICE_KEY}
+      const serviceKey = import.meta.env.VITE_MONETBIL_SERVICE_KEY;
+      
+      if (!serviceKey) {
+        throw new Error('Configuration Monetbil manquante: VITE_MONETBIL_SERVICE_KEY non défini');
+      }
+      
+      const monetbilUrl = `https://monetbil.com${serviceKey}`;
 
       // Create payment form dynamically
       const form = document.createElement('form');
@@ -152,8 +156,8 @@ export function useMonetbil(options: UseMonetbilOptions = {}): UseMonetbilReturn
         item_description: orderData.description,
         
         // Redirect URLs
-        return_url: `${window.location.origin}${config.successUrl}`,
-        cancel_url: `${window.location.origin}${config.cancelUrl}`,
+        return_url: `${window.location.origin}/success`,
+        cancel_url: `${window.location.origin}/cancel`,
         notify_url: `${window.location.origin}/api/payment/notify`,
         
         // Reference
