@@ -1,3 +1,5 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { CartProvider } from './context/CartContext';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import FeaturesSection from './components/FeaturesSection';
@@ -7,8 +9,10 @@ import EventsSection from './components/EventsSection';
 import TestimonialsSection from './components/TestimonialsSection';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
+import SuccessPage from './pages/SuccessPage';
+import CancelPage from './pages/CancelPage';
 
-export default function App() {
+function MainLayout() {
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary">
       {/* Navigation Header */}
@@ -41,5 +45,19 @@ export default function App() {
       {/* Floating WhatsApp CTA */}
       <WhatsAppButton />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <CartProvider>
+        <Routes>
+          <Route path="/" element={<MainLayout />} />
+          <Route path="/success" element={<SuccessPage />} />
+          <Route path="/cancel" element={<CancelPage />} />
+        </Routes>
+      </CartProvider>
+    </BrowserRouter>
   );
 }
