@@ -6,15 +6,20 @@
  * Complete checkout flow with business automation:
  * 1. Displays cart summary + reservation info
  * 2. Validates all required fields (no empty/zero submissions)
- * 3. Triggers Monetbil payment widget
+ * 3. Triggers Monetbil payment widget (Widget v2.1 API)
  * 4. Listens for success/fail callbacks
  * 5. On success: compiles order, dispatches to WhatsApp
  * 6. On cancel: preserves cart, returns user to modal
+ * 
+ * MONETBIL WIDGET v2.1 API:
+ * - URL: https://monetbil.com{service_key}
+ * - Operators: CM_MTNMOBILEMONEY, CM_ORANGEMONEY
  * 
  * PAYMENT FLOW:
  * - User fills reservation form (stored in CartContext)
  * - User adds items to cart
  * - User clicks "Commander" → modal opens
+ * - User selects operator (MTN MoMo or Orange Money)
  * - User clicks "Payer" → Monetbil widget opens
  * - On success → WhatsApp auto-dispatch + redirect to /success
  * - On cancel → cart preserved, user returns to modal
@@ -22,10 +27,10 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X, ShoppingCart, CreditCard, Phone, User, Loader2, Shield, AlertCircle } from 'lucide-react';
+import { X, ShoppingCart, CreditCard, Phone, User, Loader2, Shield, AlertCircle, Check } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useMonetbil } from '../hooks/useMonetbil';
-import { isPaymentConfigured } from '../config/payment';
+import { isPaymentConfigured, MONETBIL_OPERATORS, type MonetbilOperator, isWhatsAppConfigured } from '../config/payment';
 import {
   compileOrder,
   validateOrder,
@@ -42,6 +47,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { items, total, reservation, clearCart, closeCheckout } = useCart();
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [orderCompiled, setOrderCompiled] = useState(false);
+  const [selectedOperator, setSelectedOperator] = useState<MonetbilOperator | null>(null);
 
   // Monetbil payment hook
   const { initiatePayment, isProcessing, error: paymentError, resetError } = useMonetbil({
@@ -52,8 +58,17 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       // Store for success page
       storeOrderForSuccessPage(order);
       
-      // Dispatch to WhatsApp (Option A)
-      dispatchToWhatsApp(order);
+      // Dispatch to WhatsApp (Option A) - with error handling
+      try {
+        if (isWhatsAppConfigured()) {
+          dispatchToWhatsApp(order);
+        } else {
+          console.warn('[Clavio Akwa] WhatsApp dispatch skipped: VITE_RESTAURANT_WHATSAPP not configured');
+        }
+      } catch (error) {
+        console.error('[Clavio Akwa] WhatsApp dispatch failed:', error);
+        // Continue with success flow even if WhatsApp fails
+      }
       
       // Clear cart after successful payment
       clearCart();
@@ -88,11 +103,12 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     };
   }, [isOpen]);
 
-  // Clear validation errors when modal opens
+  // Clear validation errors and reset operator when modal opens
   useEffect(() => {
     if (isOpen) {
       setValidationErrors([]);
       setOrderCompiled(false);
+      setSelectedOperator(null);
       resetError();
     }
   }, [isOpen, resetError]);
@@ -104,6 +120,12 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     const validation = validateOrder(reservation, items);
     if (!validation.isValid) {
       setValidationErrors(validation.errors);
+      return;
+    }
+
+    // Validate operator selection
+    if (!selectedOperator) {
+      setValidationErrors(['Veuillez sélectionner un opérateur de paiement (MTN MoMo ou Orange Money)']);
       return;
     }
 
@@ -119,7 +141,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     // Compile order (without transaction ID yet)
     const order = compileOrder(reservation, items);
 
-    // Initiate Monetbil payment
+    // Initiate Monetbil payment with selected operator
     await initiatePayment({
       amount: order.total,
       currency: order.currency,
@@ -128,6 +150,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       customerEmail: order.customer.email,
       description: `Commande Clavio Akwa - ${items.length} article(s) - ${order.reference}`,
       reference: order.reference,
+      operator: selectedOperator,
     });
   };
 
@@ -268,26 +291,68 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             </div>
           </div>
 
-          {/* Payment Methods */}
+          {/* Payment Methods - Interactive Operator Selection */}
           <div>
             <h3 className="text-text-primary font-semibold mb-4 flex items-center gap-2">
               <Phone className="w-4 h-4 text-accent" />
-              Méthode de paiement
+              Méthode de paiement <span className="text-red-500">*</span>
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 bg-bg-primary border border-border rounded-lg text-center">
+              {/* MTN MoMo Card */}
+              <button
+                type="button"
+                onClick={() => setSelectedOperator(MONETBIL_OPERATORS.MTN_MOOMO)}
+                className={`relative p-4 rounded-lg text-center transition-all duration-300 ${
+                  selectedOperator === MONETBIL_OPERATORS.MTN_MOOMO
+                    ? 'bg-yellow-500/10 border-2 border-yellow-500 shadow-lg shadow-yellow-500/20'
+                    : 'bg-bg-primary border-2 border-border hover:border-yellow-500/50'
+                }`}
+              >
+                {/* Active Check Badge */}
+                {selectedOperator === MONETBIL_OPERATORS.MTN_MOOMO && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                )}
+                
                 <div className="w-12 h-12 mx-auto mb-2 bg-yellow-500/10 rounded-lg flex items-center justify-center">
                   <span className="text-2xl">📱</span>
                 </div>
                 <p className="text-text-primary text-sm font-medium">MTN MoMo</p>
-              </div>
-              <div className="p-4 bg-bg-primary border border-border rounded-lg text-center">
+                <p className="text-text-muted text-xs mt-1">Mobile Money</p>
+              </button>
+
+              {/* Orange Money Card */}
+              <button
+                type="button"
+                onClick={() => setSelectedOperator(MONETBIL_OPERATORS.ORANGE_MONEY)}
+                className={`relative p-4 rounded-lg text-center transition-all duration-300 ${
+                  selectedOperator === MONETBIL_OPERATORS.ORANGE_MONEY
+                    ? 'bg-orange-500/10 border-2 border-orange-500 shadow-lg shadow-orange-500/20'
+                    : 'bg-bg-primary border-2 border-border hover:border-orange-500/50'
+                }`}
+              >
+                {/* Active Check Badge */}
+                {selectedOperator === MONETBIL_OPERATORS.ORANGE_MONEY && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white" />
+                  </div>
+                )}
+                
                 <div className="w-12 h-12 mx-auto mb-2 bg-orange-500/10 rounded-lg flex items-center justify-center">
                   <span className="text-2xl">📱</span>
                 </div>
                 <p className="text-text-primary text-sm font-medium">Orange Money</p>
-              </div>
+                <p className="text-text-muted text-xs mt-1">Mobile Money</p>
+              </button>
             </div>
+            
+            {/* Operator Selection Hint */}
+            {!selectedOperator && (
+              <p className="text-text-muted text-xs mt-2 text-center">
+                Sélectionnez votre opérateur pour continuer
+              </p>
+            )}
           </div>
 
           {/* Security Notice */}
@@ -305,7 +370,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isProcessing || orderCompiled || items.length === 0}
+            disabled={isProcessing || orderCompiled || items.length === 0 || !selectedOperator}
             className="w-full px-6 py-4 bg-accent hover:bg-accent-dark disabled:bg-bg-elevated disabled:text-text-muted text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-xl hover:shadow-accent/30 flex items-center justify-center gap-2 disabled:cursor-not-allowed"
           >
             {isProcessing ? (

@@ -21,8 +21,20 @@
  * REDIRECT URLS:
  * - Success: /success (after payment completion)
  * - Cancel: /cancel (if user closes payment modal)
+ * 
+ * MONETBIL WIDGET v2.1 API:
+ * - Base URL: https://monetbil.com{service_key}
+ * - Operators: CM_MTNMOBILEMONEY, CM_ORANGEMONEY
  * ============================================================
  */
+
+// Monetbil Operator Constants (Widget v2.1 API)
+export const MONETBIL_OPERATORS = {
+  MTN_MOOMO: 'CM_MTNMOBILEMONEY',
+  ORANGE_MONEY: 'CM_ORANGEMONEY',
+} as const;
+
+export type MonetbilOperator = typeof MONETBIL_OPERATORS[keyof typeof MONETBIL_OPERATORS];
 
 export interface PaymentConfig {
   serviceKey: string;
@@ -32,7 +44,7 @@ export interface PaymentConfig {
   successUrl: string;
   cancelUrl: string;
   merchantName: string;
-  restaurantWhatsApp: string;
+  restaurantWhatsApp: string | null;
 }
 
 /**
@@ -60,7 +72,8 @@ export const getPaymentConfig = (): PaymentConfig => {
     
     // Target WhatsApp number for order dispatch
     // Format: country code + number, no + or spaces (e.g., "2376XXXXXXXX")
-    restaurantWhatsApp: import.meta.env.VITE_RESTAURANT_WHATSAPP || '237600000000',
+    // Returns null if not configured (strict validation)
+    restaurantWhatsApp: import.meta.env.VITE_RESTAURANT_WHATSAPP || null,
   };
 
   return config;
@@ -78,20 +91,47 @@ export const isPaymentConfigured = (): boolean => {
 };
 
 /**
- * Get the Monetbil widget URL based on environment
+ * Build the Monetbil Widget v2.1 API URL
+ * Format: https://monetbil.com{service_key}
  */
-export const getMonetbilUrl = (): string => {
+export const getMonetbilApiUrl = (): string => {
   const config = getPaymentConfig();
-  return config.environment === 'production'
-    ? 'https://widget.monetbil.com'
-    : 'https://test.widget.monetbil.com';
+  return `https://monetbil.com${config.serviceKey}`;
 };
 
 /**
  * Build the WhatsApp deep-link URL for order dispatch
+ * Includes strict validation for the WhatsApp number
+ * 
+ * @throws Error if WhatsApp number is not configured
  */
 export const buildWhatsAppUrl = (message: string): string => {
   const config = getPaymentConfig();
+  
+  // Strict validation: throw error if WhatsApp number is not configured
+  if (!config.restaurantWhatsApp) {
+    const errorMsg = '[Clavio Akwa] CRITICAL: VITE_RESTAURANT_WHATSAPP environment variable is not configured. WhatsApp dispatch disabled. Please set this variable in your .env.local file.';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+  
+  // Validate phone number format (should be digits only with country code)
+  const phoneRegex = /^\d{10,15}$/;
+  if (!phoneRegex.test(config.restaurantWhatsApp)) {
+    const errorMsg = `[Clavio Akwa] CRITICAL: VITE_RESTAURANT_WHATSAPP value "${config.restaurantWhatsApp}" is invalid. Expected format: digits only with country code (e.g., "2376XXXXXXXX").`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+  
+  // Properly encode the message for URL
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${config.restaurantWhatsApp}?text=${encodedMessage}`;
+};
+
+/**
+ * Check if WhatsApp dispatch is available
+ */
+export const isWhatsAppConfigured = (): boolean => {
+  const config = getPaymentConfig();
+  return config.restaurantWhatsApp !== null;
 };
